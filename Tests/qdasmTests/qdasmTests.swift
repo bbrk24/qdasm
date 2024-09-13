@@ -108,16 +108,56 @@ final class qdasmTests: XCTestCase {
         )
     }
 
-    func test_duplicateInContext() {
-        let a = Qdeql.readInput()
-        var b = Qdeql.readInput()
-        let c = Qdeql.readInput()
-        let b2 = Qdeql.duplicate(&b)
-        Qdeql.print(a)
-        Qdeql.print(b)
-        Qdeql.print(b2)
-        Qdeql.print(c)
+    func test_deallocate() {
+        let x = Qdeql.readInput()
+        let y = Qdeql.readInput()
+        Qdeql.deallocate(y)
+        Qdeql.print(x)
+
+        XCTAssertEqual(
+            Qdeql.program,
+            #"-&&==\==-\/\/==/=*"#
+        )
+    }
+
+    // This is supposed to generate a program to find the least prime factor of a number >= 2.
+    // It doesn't work for reasons I haven't diagnosed yet.
+    // The name starts with "zz" so it appears last in the (alphabetical) test list.
+    /*
+    func test_zz_print() {
+        let n = Qdeql.allocate(initialValue: 254)
+        let x = Qdeql.readInput()
+        Qdeql.while(n) { n in
+            let nCopy = Qdeql.duplicate(midValue: n)
+            let p = Qdeql.allocate(initialValue: 0)
+            Qdeql.subtract(p, nCopy)
+            Qdeql.decrement(n)
+            var y = Qdeql.duplicate(midValue: x)
+            Qdeql.moveToFront(&y)
+            Qdeql.while(y) { y in
+                Qdeql.assumingNotMoving(y) { y in
+                    let q = Qdeql.duplicate(midValue: p)
+                    Qdeql.decrement(q)
+                    Qdeql.clampingSubtract(&y, q)
+                    // If y > 1: decrement y
+                    // If y == 1: print p, decrement y, zero out n
+                    // If y == 0: do nothing
+                    let yCopy = Qdeql.duplicate(&y)
+                    Qdeql.ifNotZero(yCopy) {
+                        Qdeql.decrement(y)
+                        let yCopy = Qdeql.duplicate(&y)
+                        Qdeql.ifZero(yCopy) {
+                            let q = Qdeql.duplicate(midValue: p)
+                            Qdeql.print(q)
+                            Qdeql.setZero(n)
+                        }
+                    }
+                }
+            }
+            Qdeql.deallocate(p)
+        }
 
         print(Qdeql.program)
     }
+    */
 }

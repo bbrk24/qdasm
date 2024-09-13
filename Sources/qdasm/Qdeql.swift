@@ -362,6 +362,70 @@ public enum Qdeql {
     public static func debugPrintQueueSize() {
         Swift.print(queueSize)
     }
+
+    /// Assuming a the value at a slot is neither 0 nor 255, duplicate it in-place.
+    /// It is undefined behavior if `slot` is actually 0 or 255 at runtime.
+    public static func duplicate(midValue slot: borrowing QueueSlot) -> QueueSlot {
+        let idx = slots.firstIndex(of: slot.object)!
+        // Queue: [a] x [b]
+        let aCount = idx
+        let bCount = queueSize - aCount - 1
+        program += String(repeating: "=", count: aCount)
+        removeRedundantRotation()
+        program += "\\"
+        // Queue: [b] [a] x -x 0
+        program += String(repeating: "=", count: aCount + bCount)
+        // Queue: x -x 0 [b] [a]
+        program += "\\"
+        // Queue: -x 0 [b] [a] x 0 0
+        program += String(repeating: "=", count: aCount + bCount + 2)
+        // Queue: x 0 0 -x 0 [b] [a]
+        program += "-"
+        // Queue: 0 0 -x 0 [b] [a] x
+        program += #"\/\/"#
+        // Queue: -x 0 [b] [a] x
+        program += "-"
+        // Queue: 0 [b] [a] x -x
+        program += String(repeating: "=", count: aCount + bCount + 1)
+        // Queue: x -x 0 [b] [a]
+        program += "/"
+        // Queue: -x 0 [b] [a]
+        program += "\\"
+        // Queue: 0 [b] [a] -x x x
+        program += String(repeating: "=", count: aCount + bCount + 1)
+        // Queue: -x x x 0 [b] [a]
+        program += "\\"
+        // Queue: x x 0 [b] [a] -x 0 0
+        program += "--"
+        // Queue: 0 [b] [a] -x 0 0 x x
+        program += String(repeating: "=", count: aCount + bCount + 1)
+        // Queue: -x 0 0 x x 0 [b] [a]
+        program += "-"
+        // Queue: 0 0 x x 0 [b] [a] -x
+        program += #"\/\/"#
+        // Queue: x x 0 [b] [a] -x
+        program += String(repeating: "=", count: aCount + bCount + 3)
+        // Queue: -x x x 0 [b] [a]
+        program += "/"
+        // Queue: x x 0 [b] [a]
+        // We need another zero to be able to exit both loops
+        program += "\\"
+        // Queue: x 0 [b] [a] x 0 0
+        program += "="
+        // Queue: 0 [b] [a] x 0 0 x
+        program += "/"
+        // Queue: [b] [a] x 0 0 x
+        program += String(repeating: "=", count: aCount + bCount + 1)
+        // Queue: 0 0 x [b] [a] x
+        program += "//"
+        // Queue: x [b] [a] x
+        program += String(repeating: "=", count: bCount + 1)
+        // Queue: [a] x x b
+
+        let newSlot = QueueSlot()
+        slots.insert(newSlot.object, at: idx + 1)
+        return newSlot
+    }
 }
 
 extension Qdeql {
@@ -372,5 +436,13 @@ extension Qdeql {
         let ans = allocate(initialValue: 255)
         subtract(ans, diff)
         return ans
+    }
+
+    public static func setZero(_ slot: borrowing QueueSlot) {
+        let copy = duplicate(midValue: slot)
+        `while`(copy) { copy in
+            decrement(slot)
+            decrement(copy)
+        }
     }
 }
